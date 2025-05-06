@@ -1,0 +1,66 @@
+# Build results
+bin/
+obj/
+[Ll]og/
+TestResults/
+*.log
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Visual Studio
+.vs/
+.vscode/
+
+# Rider
+.idea/
+*.sln.iml
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Dotnet watch
+**/node_modules/
+**/dist/
+**/tmp/
+
+# ASP.NET Core
+wwwroot/
+appsettings.*.json
+
+# Entity Framework
+migrations/
+
+# Publish outputs
+publish/
+out/
+
+# Coverage and reports
+coverage/
+*.coverage
+*.coveragexml
+*.testresults
+*.trx
+
+# Others
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.dotCover
+*.dotTrace
+*.dotMemory
+
+# Global tool restore
+.tools/
+
+# Secrets (if you’re using dotnet user-secrets)
+secrets.json
