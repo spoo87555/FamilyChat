@@ -1,0 +1,17 @@
+An application enabling secure family chats
+* Fixed list of family members
+* One default shared discussion for all members
+* Option to create additional discussions with selected members
+* Available as a web app and native mobile app
+* All discussions encrypted both in transit and at rest
+* Real-time notifications sent to mobile app users
+* Designed to be user-friendly with an appealing, modern interface
+
+Technical requirement:
+Backend with .NET 9
+Frontend with React
+Mobile app with React Native
+Deployment on Azure
+
+Use high quality of code with best practices and patterns
+
