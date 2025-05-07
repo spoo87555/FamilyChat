@@ -12,15 +12,23 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.4" />
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.4" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+    <Using Include="Moq" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FamilyChat.Domain\FamilyChat.Domain.csproj" />
     <ProjectReference Include="..\FamilyChat.Application\FamilyChat.Application.csproj" />
+    <ProjectReference Include="..\FamilyChat.Infrastructure\FamilyChat.Infrastructure.csproj" />
+    <ProjectReference Include="..\FamilyChat.API\FamilyChat.API.csproj" />
   </ItemGroup>
 
 </Project>
