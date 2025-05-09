@@ -12,7 +12,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
     private SqliteConnection? _connection;
-
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>

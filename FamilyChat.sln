@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FamilyChat.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FamilyChat.API", "FamilyChat.API\FamilyChat.API.csproj", "{C6E52F2A-29BA-47C3-B693-6E60C4DB14B7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FamilyChat.Tests", "FamilyChat.Tests\FamilyChat.Tests.csproj", "{ECA08D4A-284E-4D85-AFD2-9371D340E25E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,9 +36,5 @@ Global
 		{C6E52F2A-29BA-47C3-B693-6E60C4DB14B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C6E52F2A-29BA-47C3-B693-6E60C4DB14B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C6E52F2A-29BA-47C3-B693-6E60C4DB14B7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ECA08D4A-284E-4D85-AFD2-9371D340E25E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ECA08D4A-284E-4D85-AFD2-9371D340E25E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ECA08D4A-284E-4D85-AFD2-9371D340E25E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ECA08D4A-284E-4D85-AFD2-9371D340E25E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

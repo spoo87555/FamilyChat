@@ -10,7 +10,7 @@ namespace FamilyChat.API;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -20,23 +20,34 @@ public class Program
 
         builder.Services.AddAuthorization();
         builder.Services.AddControllers();
-// Add DbContext
+
+        // Add DbContext
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register repositories
+        // Register repositories
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IChatRepository, ChatRepository>();
         builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
-// Register command and query handlers
+        // Register command and query handlers
         builder.Services.AddScoped<ICommandHandler<CreateUserCommand, CreateUserResponse>, CreateUserCommandHandler>();
         builder.Services
             .AddScoped<IQueryHandler<GetUserDetailsQuery, GetUserDetailsResponse>, GetUserDetailsQueryHandler>();
 
+        // Register database seeder
+        builder.Services.AddScoped<DatabaseSeeder>();
+
         var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+        // Seed the database
+        using (var scope = app.Services.CreateScope())
+        {
+            var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+            await seeder.SeedAsync();
+        }
+
+        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
@@ -44,7 +55,6 @@ public class Program
 
         app.UseHttpsRedirection();
         app.UseAuthorization();
-
 
         app.MapControllers();
 
