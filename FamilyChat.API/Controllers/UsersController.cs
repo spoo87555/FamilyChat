@@ -8,7 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace FamilyChat.API.Controllers;
 
-public class UsersController : ApiControllerBase
+[ApiController]
+[Route("api/[controller]")]
+public class UsersController : ControllerBase
 {
     private readonly ICommandHandler<CreateUserCommand, CreateUserResponse> _createUserHandler;
     private readonly IQueryHandler<GetUserDetailsQuery, GetUserDetailsResponse> _getUserDetailsHandler;
@@ -24,13 +26,22 @@ public class UsersController : ApiControllerBase
         _logger = logger;
     }
 
+    /// <summary>
+    /// Creates a new user
+    /// </summary>
+    /// <param name="command">User creation details</param>
+    /// <returns>The created user's details</returns>
+    /// <response code="201">Returns the newly created user</response>
+    /// <response code="400">If the command is invalid</response>
     [HttpPost]
-    public async Task<ActionResult<CreateUserResponse>> Create(CreateUserCommand command)
+    [ProducesResponseType(typeof(CreateUserResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<CreateUserResponse>> CreateUser(CreateUserCommand command)
     {
         try
         {
             var result = await _createUserHandler.Handle(command);
-            return HandleResult(result);
+            return CreatedAtAction(nameof(GetUser), new { id = result.Id }, result);
         }
         catch (InvalidOperationException ex)
         {
@@ -39,14 +50,27 @@ public class UsersController : ApiControllerBase
         }
     }
 
+    /// <summary>
+    /// Gets user details by ID
+    /// </summary>
+    /// <param name="id">The user ID</param>
+    /// <returns>The user's details</returns>
+    /// <response code="200">Returns the user details</response>
+    /// <response code="404">If the user is not found</response>
     [HttpGet("{id}")]
-    public async Task<ActionResult<GetUserDetailsResponse>> GetDetails(Guid id)
+    [ProducesResponseType(typeof(GetUserDetailsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<GetUserDetailsResponse>> GetUser(Guid id)
     {
         try
         {
             var query = new GetUserDetailsQuery { UserId = id };
             var result = await _getUserDetailsHandler.Handle(query);
-            return HandleResult(result);
+            
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
         }
         catch (InvalidOperationException ex)
         {

@@ -5,6 +5,7 @@ using FamilyChat.Domain.Interfaces;
 using FamilyChat.Infrastructure.Data;
 using FamilyChat.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 namespace FamilyChat.API;
 
@@ -15,11 +16,26 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
+        builder.Services.AddControllers();
+
+        // Configure Swagger/OpenAPI
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "Family Chat API",
+                Version = "v1",
+                Description = "API for the Family Chat application",
+                Contact = new OpenApiContact
+                {
+                    Name = "Family Chat Team",
+                    Email = "support@familychat.com"
+                }
+            });
+        });
 
         builder.Services.AddAuthorization();
-        builder.Services.AddControllers();
 
         // Add DbContext
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -50,12 +66,16 @@ public class Program
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Family Chat API V1");
+                c.RoutePrefix = "swagger";
+            });
         }
 
         app.UseHttpsRedirection();
         app.UseAuthorization();
-
         app.MapControllers();
 
         app.Run();
