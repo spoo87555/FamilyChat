@@ -4,6 +4,7 @@ using FamilyChat.Application.Users.Queries.GetUserDetails;
 using FamilyChat.Domain.Interfaces;
 using FamilyChat.Infrastructure.Data;
 using FamilyChat.Infrastructure.Repositories;
+using FamilyChat.API.Hubs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -34,6 +35,9 @@ public class Program
                 }
             });
         });
+
+        // Add SignalR
+        builder.Services.AddSignalR();
 
         builder.Services.AddAuthorization();
 
@@ -75,7 +79,12 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseStaticFiles();
         app.UseAuthorization();
+
+        // Configure SignalR hub
+        app.MapHub<ChatHub>("/hubs/chat");
+
         app.MapControllers();
 
         app.Run();

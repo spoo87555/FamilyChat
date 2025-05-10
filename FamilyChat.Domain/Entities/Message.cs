@@ -16,23 +16,21 @@ public class Message
 
     private Message() { } // For EF Core
 
-    public Message(string content, Chat chat, User sender)
+    public Message(Guid chatId, Guid senderId, string content)
     {
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Message content cannot be empty", nameof(content));
-        if (chat == null)
-            throw new ArgumentNullException(nameof(chat));
-        if (sender == null)
-            throw new ArgumentNullException(nameof(sender));
+        if (chatId == null)
+            throw new ArgumentNullException(nameof(chatId));
+        if (senderId == null)
+            throw new ArgumentNullException(nameof(senderId));
 
         Id = Guid.NewGuid();
         Content = content;
         CreatedAt = DateTime.UtcNow;
         IsEdited = false;
-        ChatId = chat.Id;
-        Chat = chat;
-        SenderId = sender.Id;
-        Sender = sender;
+        ChatId = chatId;
+        SenderId = senderId;
     }
 
     public void Edit(string newContent)
