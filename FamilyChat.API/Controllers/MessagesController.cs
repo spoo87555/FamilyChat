@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using FamilyChat.API.Hubs;
 using FamilyChat.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace FamilyChat.API.Controllers;
 
@@ -71,10 +73,26 @@ public class MessagesController : ControllerBase
         if (!await _chatRepository.ExistsAsync(chatId))
             return NotFound($"Chat with ID {chatId} not found");
 
-        // TODO: Get the actual user ID from authentication
-        var userId = Guid.Parse("F7FB7A14-0D60-43B8-BE6B-FA77285CB011"); // Temporary for testing
+        // Get the user's email from claims
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (string.IsNullOrEmpty(userEmail))
+            return Unauthorized("User email not found in claims");
 
-        var message = new Message(chatId, userId, content);
+        // Get or create user based on email
+        var user = await _userRepository.GetByEmailAsync(userEmail);
+        if (user == null)
+        {
+            // Create new user from claims
+            user = new User(
+                userEmail,
+                User.FindFirst(ClaimTypes.GivenName)?.Value ?? "Unknown",
+                User.FindFirst(ClaimTypes.Surname)?.Value ?? "User",
+                null
+            );
+            await _userRepository.AddAsync(user);
+        }
+
+        var message = new Message(chatId, user.Id, content);
         await _messageRepository.AddAsync(message);
 
         // Notify all clients in the chat group
@@ -83,6 +101,7 @@ public class MessagesController : ControllerBase
             message.Id,
             message.ChatId,
             message.Content,
+            SenderName = $"{user.FirstName} {user.LastName}",
             message.SenderId,
             message.CreatedAt
         });

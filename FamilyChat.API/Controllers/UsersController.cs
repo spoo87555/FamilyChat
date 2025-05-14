@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using FamilyChat.Application.Common.Interfaces;
 using FamilyChat.Application.Users.Commands.CreateUser;
 using FamilyChat.Application.Users.Queries.GetUserDetails;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -62,6 +63,7 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GetUserDetailsResponse>> GetUser(Guid id)
     {
+        var user = HttpContext?.User!;
         try
         {
             var query = new GetUserDetailsQuery { UserId = id };

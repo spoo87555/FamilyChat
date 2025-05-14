@@ -5,7 +5,11 @@ using FamilyChat.Domain.Interfaces;
 using FamilyChat.Infrastructure.Data;
 using FamilyChat.Infrastructure.Repositories;
 using FamilyChat.API.Hubs;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 using Microsoft.OpenApi.Models;
 
 namespace FamilyChat.API;
@@ -15,11 +19,23 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        
+        Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+
+
+        // Add authentication
+        builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+            .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAdB2C"));
+        
+        builder.Services.AddAuthorization(options =>
+        {
+            options.FallbackPolicy = options.DefaultPolicy;
+        });
 
         // Add services to the container.
         builder.Services.AddControllers();
 
-        // Configure Swagger/OpenAPI
+        // Configure Swagger/OpenAPI with authentication
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -34,12 +50,41 @@ public class Program
                     Email = "support@familychat.com"
                 }
             });
+
+            // Add OAuth2 authentication to Swagger
+            c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.OAuth2,
+                Flows = new OpenApiOAuthFlows
+                {
+                    Implicit = new OpenApiOAuthFlow
+                    {
+                        AuthorizationUrl = new Uri($"{builder.Configuration["AzureAdB2C:Instance"]}/{builder.Configuration["AzureAdB2C:Domain"]}/{builder.Configuration["AzureAdB2C:SignUpSignInPolicyId"]}/oauth2/v2.0/authorize"),
+                        TokenUrl = new Uri($"{builder.Configuration["AzureAdB2C:Instance"]}/{builder.Configuration["AzureAdB2C:Domain"]}/{builder.Configuration["AzureAdB2C:SignUpSignInPolicyId"]}/oauth2/v2.0/token"),
+                        Scopes = new Dictionary<string, string>
+                        {
+                            { "openid", "OpenID" },
+                            { "profile", "Profile" },
+                            { "email", "Email" }
+                        }
+                    }
+                }
+            });
+
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" }
+                    },
+                    new[] { "openid", "profile", "email" }
+                }
+            });
         });
 
         // Add SignalR
         builder.Services.AddSignalR();
-
-        builder.Services.AddAuthorization();
 
         // Add DbContext
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -57,7 +102,14 @@ public class Program
 
         // Register database seeder
         builder.Services.AddScoped<DatabaseSeeder>();
-
+        
+        builder.Services.Configure<CookiePolicyOptions>(options =>
+        {
+            options.CheckConsentNeeded = context => false;
+            options.Secure = CookieSecurePolicy.Always;
+            options.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always;
+        });
+        
         var app = builder.Build();
 
         // Seed the database
@@ -75,12 +127,18 @@ public class Program
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Family Chat API V1");
                 c.RoutePrefix = "swagger";
+                c.OAuthClientId(builder.Configuration["AzureAdB2C:ClientId"]);
+                c.OAuthScopes("openid", "profile", "email");
             });
         }
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();
+
+        app.UseCookiePolicy();
+        app.UseAuthentication();
         app.UseAuthorization();
+        
 
         // Configure SignalR hub
         app.MapHub<ChatHub>("/hubs/chat");
