@@ -5,12 +5,12 @@ using FamilyChat.Domain.Interfaces;
 using FamilyChat.Infrastructure.Data;
 using FamilyChat.Infrastructure.Repositories;
 using FamilyChat.API.Hubs;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Web;
-using Microsoft.Identity.Web.UI;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace FamilyChat.API;
 
@@ -22,10 +22,37 @@ public class Program
         
         Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 
+        // Add JWT Authentication
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found in configuration")))
+                };
 
-        // Add authentication
-        builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-            .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAdB2C"));
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
         
         builder.Services.AddAuthorization(options =>
         {
@@ -44,8 +71,7 @@ public class Program
                     builder.WithOrigins("http://localhost:5173") // React dev server
                            .AllowAnyMethod()
                            .AllowAnyHeader()
-                           .AllowCredentials()
-                           .SetIsOriginAllowed(origin => true); // For development only
+                           .AllowCredentials();
                 });
         });
 
@@ -65,24 +91,14 @@ public class Program
                 }
             });
 
-            // Add OAuth2 authentication to Swagger
-            c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+            // Add JWT authentication to Swagger
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Type = SecuritySchemeType.OAuth2,
-                Flows = new OpenApiOAuthFlows
-                {
-                    AuthorizationCode = new OpenApiOAuthFlow
-                    {
-                        AuthorizationUrl = new Uri($"{builder.Configuration["AzureAdB2C:Instance"]}/{builder.Configuration["AzureAdB2C:Domain"]}/{builder.Configuration["AzureAdB2C:SignUpSignInPolicyId"]}/oauth2/v2.0/authorize"),
-                        TokenUrl = new Uri($"{builder.Configuration["AzureAdB2C:Instance"]}/{builder.Configuration["AzureAdB2C:Domain"]}/{builder.Configuration["AzureAdB2C:SignUpSignInPolicyId"]}/oauth2/v2.0/token"),
-                        Scopes = new Dictionary<string, string>
-                        {
-                            { "openid", "OpenID" },
-                            { "profile", "Profile" },
-                            { "email", "Email" }
-                        }
-                    }
-                }
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
             });
 
             c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -90,9 +106,13 @@ public class Program
                 {
                     new OpenApiSecurityScheme
                     {
-                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "oauth2" }
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
                     },
-                    new[] { "openid", "profile", "email" }
+                    Array.Empty<string>()
                 }
             });
         });
@@ -141,9 +161,6 @@ public class Program
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Family Chat API V1");
                 c.RoutePrefix = "swagger";
-                c.OAuthClientId(builder.Configuration["AzureAdB2C:ClientId"]);
-                c.OAuthScopes("openid", "profile", "email");
-                c.OAuth2RedirectUrl("https://localhost:7296/swagger/oauth2-redirect.html");
             });
         }
 

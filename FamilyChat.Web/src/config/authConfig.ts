@@ -16,5 +16,14 @@ export const msalConfig = {
 
 // Add here scopes for id token to be used at MS Identity Platform endpoints.
 export const loginRequest: PopupRequest = {
-    scopes: ["openid", "profile"]
+    scopes: [
+        "openid", 
+        "profile", 
+        "email"
+    ]
+};
+
+// API scope for accessing the backend
+export const apiRequest: PopupRequest = {
+    scopes: ["https://touinafamily.onmicrosoft.com/chat-api/chat.readwrite"]
 }; 
