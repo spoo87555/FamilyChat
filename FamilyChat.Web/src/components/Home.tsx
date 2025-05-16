@@ -3,10 +3,18 @@ import { loginRequest, apiRequest } from "../config/authConfig";
 import { Button, Container, Typography, Box } from "@mui/material";
 import { useState, useEffect } from "react";
 
+interface UserDetails {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+}
+
 export const Home = () => {
     const { instance, accounts, inProgress } = useMsal();
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
 
     const acquireToken = async () => {
         if (!accounts[0]) return;
@@ -22,6 +30,29 @@ export const Home = () => {
         } catch (error) {
             console.error("Token acquisition failed:", error);
             setError("Failed to acquire token. Please try signing in again.");
+        }
+    };
+
+    const fetchUserDetails = async () => {
+        if (!accessToken) return;
+
+        try {
+            const response = await fetch('https://localhost:7296/api/Users/c47999f9-1a5c-44c8-a94e-08bd8f1dc71e', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setUserDetails(data);
+            setError(null);
+        } catch (error) {
+            console.error("Failed to fetch user details:", error);
+            setError("Failed to fetch user details. Please try again.");
         }
     };
 
@@ -41,6 +72,13 @@ export const Home = () => {
             acquireToken();
         }
     }, [inProgress, accounts]);
+
+    // Fetch user details when access token is available
+    useEffect(() => {
+        if (accessToken) {
+            fetchUserDetails();
+        }
+    }, [accessToken]);
 
     return (
         <Container maxWidth="sm">
@@ -81,6 +119,14 @@ export const Home = () => {
                         >
                             Access Token: {accessToken ?? "Loading..."}
                         </Typography>
+                        {userDetails && (
+                            <Box sx={{ mt: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+                                <Typography variant="h6" gutterBottom>User Details:</Typography>
+                                <Typography>ID: {userDetails.id}</Typography>
+                                <Typography>Email: {userDetails.email}</Typography>
+                                <Typography>Name: {userDetails.firstName} {userDetails.lastName}</Typography>
+                            </Box>
+                        )}
                         <Button 
                             variant="outlined" 
                             onClick={acquireToken}

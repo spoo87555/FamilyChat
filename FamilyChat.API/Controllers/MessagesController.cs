@@ -14,7 +14,6 @@ namespace FamilyChat.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class MessagesController : ControllerBase
 {
     private readonly IMessageRepository _messageRepository;
@@ -74,8 +73,8 @@ public class MessagesController : ControllerBase
         if (!await _chatRepository.ExistsAsync(chatId))
             return NotFound($"Chat with ID {chatId} not found");
 
-        // Get the user's email from JWT claims
-        var userEmail = User.FindFirst("emails")?.Value ?? User.FindFirst(ClaimTypes.Email)?.Value;
+        // Get the user's email from claims
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
         if (string.IsNullOrEmpty(userEmail))
             return Unauthorized("User email not found in claims");
 
@@ -86,8 +85,8 @@ public class MessagesController : ControllerBase
             // Create new user from claims
             user = new User(
                 userEmail,
-                User.FindFirst("given_name")?.Value ?? User.FindFirst(ClaimTypes.GivenName)?.Value ?? "Unknown",
-                User.FindFirst("family_name")?.Value ?? User.FindFirst(ClaimTypes.Surname)?.Value ?? "User",
+                User.FindFirst(ClaimTypes.GivenName)?.Value ?? "Unknown",
+                User.FindFirst(ClaimTypes.Surname)?.Value ?? "User",
                 null
             );
             await _userRepository.AddAsync(user);
@@ -100,14 +99,11 @@ public class MessagesController : ControllerBase
         await _hubContext.Clients.Group(chatId.ToString()).SendAsync("ReceiveMessage", new
         {
             message.Id,
+            message.ChatId,
             message.Content,
-            message.CreatedAt,
-            Sender = new
-            {
-                user.Id,
-                user.FirstName,
-                user.LastName
-            }
+            SenderName = $"{user.FirstName} {user.LastName}",
+            message.SenderId,
+            message.CreatedAt
         });
 
         return CreatedAtAction(nameof(GetChatMessages), new { chatId }, message);
