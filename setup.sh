@@ -27,3 +27,5 @@ dotnet add FamilyChat.Tests reference FamilyChat.Domain
 dotnet add FamilyChat.Tests reference FamilyChat.Application
 
 echo "Solution and projects created successfully!"
+
+npm create vite@latest FamilyChat.Web -- --template react-ts

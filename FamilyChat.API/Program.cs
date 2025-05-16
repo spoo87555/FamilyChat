@@ -35,6 +35,20 @@ public class Program
         // Add services to the container.
         builder.Services.AddControllers();
 
+        // Add CORS
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowReactApp",
+                builder =>
+                {
+                    builder.WithOrigins("http://localhost:5173") // React dev server
+                           .AllowAnyMethod()
+                           .AllowAnyHeader()
+                           .AllowCredentials()
+                           .SetIsOriginAllowed(origin => true); // For development only
+                });
+        });
+
         // Configure Swagger/OpenAPI with authentication
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
@@ -57,7 +71,7 @@ public class Program
                 Type = SecuritySchemeType.OAuth2,
                 Flows = new OpenApiOAuthFlows
                 {
-                    Implicit = new OpenApiOAuthFlow
+                    AuthorizationCode = new OpenApiOAuthFlow
                     {
                         AuthorizationUrl = new Uri($"{builder.Configuration["AzureAdB2C:Instance"]}/{builder.Configuration["AzureAdB2C:Domain"]}/{builder.Configuration["AzureAdB2C:SignUpSignInPolicyId"]}/oauth2/v2.0/authorize"),
                         TokenUrl = new Uri($"{builder.Configuration["AzureAdB2C:Instance"]}/{builder.Configuration["AzureAdB2C:Domain"]}/{builder.Configuration["AzureAdB2C:SignUpSignInPolicyId"]}/oauth2/v2.0/token"),
@@ -129,6 +143,7 @@ public class Program
                 c.RoutePrefix = "swagger";
                 c.OAuthClientId(builder.Configuration["AzureAdB2C:ClientId"]);
                 c.OAuthScopes("openid", "profile", "email");
+                c.OAuth2RedirectUrl("https://localhost:7296/swagger/oauth2-redirect.html");
             });
         }
 
@@ -136,9 +151,12 @@ public class Program
         app.UseStaticFiles();
 
         app.UseCookiePolicy();
+        
+        // Use CORS before authentication
+        app.UseCors("AllowReactApp");
+        
         app.UseAuthentication();
         app.UseAuthorization();
-        
 
         // Configure SignalR hub
         app.MapHub<ChatHub>("/hubs/chat");
