@@ -1,6 +1,8 @@
 using FamilyChat.Application.Common.Interfaces;
 using FamilyChat.Application.Users.Commands.CreateUser;
 using FamilyChat.Application.Users.Queries.GetUserDetails;
+using FamilyChat.Application.Chats.Queries.GetChats;
+using FamilyChat.Application.Chats.Commands.CreateChat;
 using FamilyChat.Domain.Interfaces;
 using FamilyChat.Infrastructure.Data;
 using FamilyChat.Infrastructure.Repositories;
@@ -132,6 +134,9 @@ public class Program
         builder.Services.AddScoped<ICommandHandler<CreateUserCommand, CreateUserResponse>, CreateUserCommandHandler>();
         builder.Services
             .AddScoped<IQueryHandler<GetUserDetailsQuery, GetUserDetailsResponse>, GetUserDetailsQueryHandler>();
+        builder.Services
+            .AddScoped<IQueryHandler<GetChatsQuery, IEnumerable<GetChatsResponse>>, GetChatsQueryHandler>();
+        builder.Services.AddScoped<ICommandHandler<CreateChatCommand, CreateChatResponse>, CreateChatCommandHandler>();
 
         // Register database seeder
         builder.Services.AddScoped<DatabaseSeeder>();

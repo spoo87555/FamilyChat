@@ -1,7 +1,9 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Home } from './components/Home';
+import { ChatPage } from './components/ChatPage';
 import { MsalProvider } from "@azure/msal-react";
 import { PublicClientApplication } from "@azure/msal-browser";
-import { msalConfig } from "./config/authConfig";
-import { Home } from "./components/Home";
+import { msalConfig } from './config/authConfig';
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 
 const msalInstance = new PublicClientApplication(msalConfig);
@@ -12,7 +14,12 @@ function App() {
     <MsalProvider instance={msalInstance}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Home />
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/chat" element={<ChatPage />} />
+          </Routes>
+        </Router>
       </ThemeProvider>
     </MsalProvider>
   );

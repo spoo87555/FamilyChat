@@ -12,7 +12,7 @@ export const msalConfig = {
         cacheLocation: "sessionStorage",
         storeAuthStateInCookie: false,
     }
-} as const;
+};
 
 // Add here scopes for id token to be used at MS Identity Platform endpoints.
 export const loginRequest: PopupRequest = {

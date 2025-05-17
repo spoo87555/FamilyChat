@@ -2,57 +2,28 @@ import { useMsal } from "@azure/msal-react";
 import { loginRequest, apiRequest } from "../config/authConfig";
 import { Button, Container, Typography, Box } from "@mui/material";
 import { useState, useEffect } from "react";
-
-interface UserDetails {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-}
+import { useNavigate } from "react-router-dom";
 
 export const Home = () => {
     const { instance, accounts, inProgress } = useMsal();
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+    const navigate = useNavigate();
 
     const acquireToken = async () => {
         if (!accounts[0]) return;
 
         try {
+            console.log(accounts[0]);
             const response = await instance.acquireTokenSilent({
                 ...apiRequest,
                 account: accounts[0]
             });
             setAccessToken(response.accessToken);
             setError(null);
-            console.log("Access Token acquired:", response.accessToken);
         } catch (error) {
             console.error("Token acquisition failed:", error);
             setError("Failed to acquire token. Please try signing in again.");
-        }
-    };
-
-    const fetchUserDetails = async () => {
-        if (!accessToken) return;
-
-        try {
-            const response = await fetch('https://localhost:7296/api/Users/c47999f9-1a5c-44c8-a94e-08bd8f1dc71e', {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            setUserDetails(data);
-            setError(null);
-        } catch (error) {
-            console.error("Failed to fetch user details:", error);
-            setError("Failed to fetch user details. Please try again.");
         }
     };
 
@@ -72,13 +43,6 @@ export const Home = () => {
             acquireToken();
         }
     }, [inProgress, accounts]);
-
-    // Fetch user details when access token is available
-    useEffect(() => {
-        if (accessToken) {
-            fetchUserDetails();
-        }
-    }, [accessToken]);
 
     return (
         <Container maxWidth="sm">
@@ -100,40 +64,20 @@ export const Home = () => {
                 ) : (
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="h6" gutterBottom>
-                            Signed in as: {accounts[0].username}
+                            Signed in as: {(accounts[0].idTokenClaims as any)?.given_name}
                         </Typography>
                         {error && (
                             <Typography color="error" sx={{ mt: 2 }}>
                                 {error}
                             </Typography>
                         )}
-                        <Typography 
-                            variant="body1" 
-                            sx={{ 
-                                wordBreak: 'break-word',
-                                backgroundColor: '#f5f5f5',
-                                padding: 2,
-                                borderRadius: 1,
-                                mt: 2
-                            }}
-                        >
-                            Access Token: {accessToken ?? "Loading..."}
-                        </Typography>
-                        {userDetails && (
-                            <Box sx={{ mt: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-                                <Typography variant="h6" gutterBottom>User Details:</Typography>
-                                <Typography>ID: {userDetails.id}</Typography>
-                                <Typography>Email: {userDetails.email}</Typography>
-                                <Typography>Name: {userDetails.firstName} {userDetails.lastName}</Typography>
-                            </Box>
-                        )}
-                        <Button 
-                            variant="outlined" 
-                            onClick={acquireToken}
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => navigate('/chat')}
                             sx={{ mt: 2 }}
-                            disabled={inProgress !== "none"}
                         >
-                            Refresh Token
+                            Go to Chat
                         </Button>
                     </Box>
                 )}
