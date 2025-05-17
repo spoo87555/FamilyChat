@@ -14,7 +14,7 @@ public static class StaticMembersConfiguration
     {
         public static readonly List<(string Email, string FirstName, string LastName, string Password)> DefaultMembers = new()
         {
-            ("mom@family.com", "Mom", "Family", "Mom123!"),
+            ("spoo87555@gmail.com", "Mom", "Family", "Mom123!"),
             ("dad@family.com", "Dad", "Family", "Dad123!"),
             ("sister@family.com", "Sister", "Family", "Sister123!"),
             ("brother@family.com", "Brother", "Family", "Brother123!")
