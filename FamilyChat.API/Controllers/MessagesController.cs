@@ -74,20 +74,24 @@ public class MessagesController : ControllerBase
             return NotFound($"Chat with ID {chatId} not found");
 
         // Get the user's email from claims
-        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        var userEmail = User.FindFirst("emails")?.Value;
         if (string.IsNullOrEmpty(userEmail))
+        {
+            _logger.LogWarning("Email claim not found in token. Available claims: {Claims}", 
+                string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}")));
             return Unauthorized("User email not found in claims");
+        }
 
         // Get or create user based on email
         var user = await _userRepository.GetByEmailAsync(userEmail);
-        if (user == null)
+        if (user == null) 
         {
             // Create new user from claims
             user = new User(
                 userEmail,
                 User.FindFirst(ClaimTypes.GivenName)?.Value ?? "Unknown",
                 User.FindFirst(ClaimTypes.Surname)?.Value ?? "User",
-                null
+                null // No password hash needed for social login
             );
             await _userRepository.AddAsync(user);
         }
@@ -98,12 +102,25 @@ public class MessagesController : ControllerBase
         // Notify all clients in the chat group
         await _hubContext.Clients.Group(chatId.ToString()).SendAsync("ReceiveMessage", new
         {
-            message.Id,
-            message.ChatId,
-            message.Content,
-            SenderName = $"{user.FirstName} {user.LastName}",
-            message.SenderId,
-            message.CreatedAt
+            id = message.Id,
+            chatId = message.ChatId,
+            content = message.Content,
+            senderName = $"{user.FirstName} {user.LastName}",
+            senderId = message.SenderId,
+            createdAt = message.CreatedAt,
+            editedAt = message.EditedAt,
+            isEdited = message.IsEdited,
+            sender = new
+            {
+                id = user.Id,
+                email = user.Email,
+                firstName = user.FirstName,
+                lastName = user.LastName,
+                createdAt = user.CreatedAt,
+                lastLoginAt = user.LastLoginAt,
+                isActive = user.IsActive,
+                deviceToken = user.DeviceToken
+            }
         });
 
         return CreatedAtAction(nameof(GetChatMessages), new { chatId }, message);

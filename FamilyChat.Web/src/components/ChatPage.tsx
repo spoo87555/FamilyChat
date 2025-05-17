@@ -2,6 +2,7 @@ import { Container, Typography, Box, List, ListItem, ListItemText, CircularProgr
 import { useMsal } from "@azure/msal-react";
 import { apiRequest } from "../config/authConfig";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface Chat {
     id: string;
@@ -15,6 +16,7 @@ export const ChatPage = () => {
     const [chats, setChats] = useState<Chat[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     const fetchChats = async () => {
         if (!accounts[0]) return;
@@ -50,6 +52,10 @@ export const ChatPage = () => {
         fetchChats();
     }, [accounts]);
 
+    const handleChatClick = (chatId: string) => {
+        navigate(`/chat/${chatId}`);
+    };
+
     return (
         <Container maxWidth="sm">
             <Box sx={{ mt: 4 }}>
@@ -70,11 +76,16 @@ export const ChatPage = () => {
                         {chats.map((chat) => (
                             <ListItem 
                                 key={chat.id}
+                                onClick={() => handleChatClick(chat.id)}
                                 sx={{ 
                                     bgcolor: 'background.paper',
                                     mb: 1,
                                     borderRadius: 1,
-                                    boxShadow: 1
+                                    boxShadow: 1,
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        bgcolor: 'action.hover'
+                                    }
                                 }}
                             >
                                 <ListItemText

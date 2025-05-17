@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Home } from './components/Home';
 import { ChatPage } from './components/ChatPage';
+import { ChatMessages } from './components/ChatMessages';
 import { MsalProvider } from "@azure/msal-react";
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig } from './config/authConfig';
@@ -18,6 +19,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/chat" element={<ChatPage />} />
+            <Route path="/chat/:chatId" element={<ChatMessages />} />
           </Routes>
         </Router>
       </ThemeProvider>

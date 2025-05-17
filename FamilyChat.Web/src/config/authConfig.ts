@@ -25,5 +25,9 @@ export const loginRequest: PopupRequest = {
 
 // API scope for accessing the backend
 export const apiRequest: PopupRequest = {
-    scopes: ["https://touinafamily.onmicrosoft.com/chat-api/chat.readwrite"]
+    scopes: [
+        "https://touinafamily.onmicrosoft.com/chat-api/chat.readwrite",
+        "email",
+        "profile"
+    ]
 }; 
