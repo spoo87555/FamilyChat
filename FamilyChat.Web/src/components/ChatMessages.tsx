@@ -68,7 +68,14 @@ export const ChatMessages = () => {
             hubConnection.on("ReceiveMessage", (message: Message) => {
                 console.log("Raw message received:", message);
                 if (message.chatId === chatId && message.senderId !== accounts[0]?.localAccountId) {
-                    setMessages(prevMessages => [...prevMessages, message]);
+                    setMessages(prevMessages => {
+                        // Check if message already exists
+                        const messageExists = prevMessages.some(m => m.id === message.id);
+                        if (messageExists) {
+                            return prevMessages;
+                        }
+                        return [...prevMessages, message];
+                    });
                     scrollToBottom();
                 }
             });
@@ -155,7 +162,14 @@ export const ChatMessages = () => {
 
     return (
         <Container maxWidth="md" sx={{ height: '100vh', py: 2 }}>
-            <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Paper elevation={3} sx={{ 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column',
+                bgcolor: '#ffffff',
+                borderRadius: '16px',
+                overflow: 'hidden'
+            }}>
                 {/* Header */}
                 <Box sx={{ 
                     p: 2, 
@@ -163,11 +177,13 @@ export const ChatMessages = () => {
                     borderColor: 'divider',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 2
+                    gap: 2,
+                    bgcolor: '#954d48',
+                    color: 'white'
                 }}>
                     <IconButton 
                         onClick={() => navigate(-1)} 
-                        color="primary"
+                        sx={{ color: 'white' }}
                     >
                         <ArrowBackIcon />
                     </IconButton>
@@ -178,7 +194,7 @@ export const ChatMessages = () => {
 
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
-                        <CircularProgress />
+                        <CircularProgress sx={{ color: '#954d48' }} />
                     </Box>
                 ) : error ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
@@ -195,7 +211,8 @@ export const ChatMessages = () => {
                             p: 2,
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: 1
+                            gap: 1.5,
+                            bgcolor: '#ffffff'
                         }}>
                             {messages.map((message) => (
                                 <ListItem 
@@ -204,7 +221,8 @@ export const ChatMessages = () => {
                                         alignSelf: message.senderId === accounts[0]?.localAccountId 
                                             ? 'flex-end' 
                                             : 'flex-start',
-                                        maxWidth: '70%',
+                                        width: '100%',
+                                        maxWidth: '100%',
                                         p: 0
                                     }}
                                 >
@@ -214,41 +232,51 @@ export const ChatMessages = () => {
                                             ? 'row-reverse' 
                                             : 'row',
                                         alignItems: 'flex-end',
-                                        gap: 1
+                                        gap: 1,
+                                        width: '100%',
+                                        maxWidth: '100%'
                                     }}>
                                         <Avatar 
                                             sx={{ 
                                                 bgcolor: message.senderId === accounts[0]?.localAccountId 
-                                                    ? 'primary.main' 
-                                                    : 'secondary.main',
+                                                    ? '#954d48' 
+                                                    : '#7a3d38',
                                                 width: 32,
                                                 height: 32,
-                                                fontSize: '0.875rem'
+                                                fontSize: '0.875rem',
+                                                flexShrink: 0
                                             }}
                                         >
                                             {getInitials(message.sender.firstName, message.sender.lastName)}
                                         </Avatar>
-                                        <Box>
+                                        <Box sx={{ 
+                                            width: 'fit-content',
+                                            maxWidth: '70%'
+                                        }}>
                                             <Paper
                                                 elevation={1}
                                                 sx={{
                                                     p: 1.5,
                                                     bgcolor: message.senderId === accounts[0]?.localAccountId 
-                                                        ? 'primary.main' 
-                                                        : 'grey.100',
+                                                        ? '#954d48' 
+                                                        : '#f5f5f5',
                                                     color: message.senderId === accounts[0]?.localAccountId 
-                                                        ? 'primary.contrastText' 
-                                                        : 'text.primary',
-                                                    borderRadius: 2,
-                                                    maxWidth: '100%',
-                                                    wordBreak: 'break-word'
+                                                        ? 'white' 
+                                                        : '#333',
+                                                    borderRadius: message.senderId === accounts[0]?.localAccountId 
+                                                        ? '16px 16px 4px 16px'
+                                                        : '16px 16px 16px 4px',
+                                                    width: '100%',
+                                                    wordBreak: 'break-word',
+                                                    overflowWrap: 'break-word'
                                                 }}
                                             >
                                                 <Typography 
                                                     variant="body1"
                                                     sx={{
                                                         whiteSpace: 'pre-wrap',
-                                                        overflowWrap: 'break-word'
+                                                        overflowWrap: 'break-word',
+                                                        wordBreak: 'break-word'
                                                     }}
                                                 >
                                                     {message.content}
@@ -293,7 +321,7 @@ export const ChatMessages = () => {
                             p: 2, 
                             borderTop: 1, 
                             borderColor: 'divider',
-                            bgcolor: 'background.paper'
+                            bgcolor: 'white'
                         }}>
                             <Box sx={{ display: 'flex', gap: 1 }}>
                                 <TextField
@@ -312,7 +340,13 @@ export const ChatMessages = () => {
                                     maxRows={4}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2
+                                            borderRadius: '24px',
+                                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#954d48'
+                                            },
+                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#954d48'
+                                            }
                                         }
                                     }}
                                 />
@@ -330,7 +364,10 @@ export const ChatMessages = () => {
                                             '&.Mui-disabled': {
                                                 bgcolor: 'action.disabledBackground',
                                                 color: 'action.disabled'
-                                            }
+                                            },
+                                            borderRadius: '50%',
+                                            width: 40,
+                                            height: 40
                                         }}
                                     >
                                         <SendIcon />
