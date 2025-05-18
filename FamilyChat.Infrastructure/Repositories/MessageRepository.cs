@@ -15,15 +15,20 @@ public class MessageRepository : BaseRepository<Message>, IMessageRepository
     {
     }
 
-    public async Task<IEnumerable<Message>> GetByChatIdAsync(Guid chatId, int skip = 0, int take = 50)
+    public async Task<IEnumerable<Message>> GetByChatIdAsync(Guid chatId, int skip = 0, int? take = null)
     {
-        return await _dbSet
+        var query = _dbSet
             .Include(m => m.Sender)
             .Where(m => m.ChatId == chatId)
-            .OrderByDescending(m => m.CreatedAt)
-            .Skip(skip)
-            .Take(take)
-            .ToListAsync();
+            .OrderBy(m => m.CreatedAt)
+            .Skip(skip);
+
+        if (take.HasValue)
+        {
+            query = query.Take(take.Value);
+        }
+
+        return await query.ToListAsync();
     }
 
     public async Task<IEnumerable<Message>> GetByUserIdAsync(Guid userId)

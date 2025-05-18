@@ -8,7 +8,7 @@ namespace FamilyChat.Domain.Interfaces;
 public interface IMessageRepository
 {
     Task<Message?> GetByIdAsync(Guid id);
-    Task<IEnumerable<Message>> GetByChatIdAsync(Guid chatId, int skip = 0, int take = 50);
+    Task<IEnumerable<Message>> GetByChatIdAsync(Guid chatId, int skip = 0, int? take = null);
     Task<IEnumerable<Message>> GetByUserIdAsync(Guid userId);
     Task AddAsync(Message message);
     Task UpdateAsync(Message message);

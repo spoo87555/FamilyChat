@@ -1,10 +1,13 @@
-import { Container, Typography, Box, List, ListItem, ListItemText, CircularProgress, TextField, Button } from "@mui/material";
+import { Container, Typography, Box, List, ListItem, ListItemText, CircularProgress, TextField, Button, Paper, Avatar, IconButton, Tooltip } from "@mui/material";
 import { useMsal } from "@azure/msal-react";
 import { apiRequest } from "../config/authConfig";
 import { createHubConnection } from "../config/hubConfig";
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import * as signalR from "@microsoft/signalr";
+import SendIcon from '@mui/icons-material/Send';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useNavigate } from 'react-router-dom';
 
 interface Message {
     id: string;
@@ -36,9 +39,19 @@ export const ChatMessages = () => {
     const [newMessage, setNewMessage] = useState("");
     const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const getInitials = (firstName: string, lastName: string) => {
+        return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    };
+
+    const formatMessageTime = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
     const setupSignalRConnection = async () => {
@@ -54,7 +67,7 @@ export const ChatMessages = () => {
 
             hubConnection.on("ReceiveMessage", (message: Message) => {
                 console.log("Raw message received:", message);
-                if (message.chatId === chatId) {
+                if (message.chatId === chatId && message.senderId !== accounts[0]?.localAccountId) {
                     setMessages(prevMessages => [...prevMessages, message]);
                     scrollToBottom();
                 }
@@ -141,77 +154,193 @@ export const ChatMessages = () => {
     }, [chatId, accounts]);
 
     return (
-        <Container maxWidth="md">
-            <Box sx={{ mt: 4, height: '80vh', display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h4" component="h1" gutterBottom align="center">
-                    Chat Messages
-                </Typography>
+        <Container maxWidth="md" sx={{ height: '100vh', py: 2 }}>
+            <Paper elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                {/* Header */}
+                <Box sx={{ 
+                    p: 2, 
+                    borderBottom: 1, 
+                    borderColor: 'divider',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2
+                }}>
+                    <IconButton 
+                        onClick={() => navigate(-1)} 
+                        color="primary"
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
+                    <Typography variant="h6" component="h1">
+                        Chat Messages
+                    </Typography>
+                </Box>
 
                 {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
                         <CircularProgress />
                     </Box>
                 ) : error ? (
-                    <Typography color="error" align="center" sx={{ mt: 2 }}>
-                        {error}
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
+                        <Typography color="error" align="center">
+                            {error}
+                        </Typography>
+                    </Box>
                 ) : (
                     <>
+                        {/* Messages List */}
                         <List sx={{ 
                             flexGrow: 1, 
                             overflow: 'auto',
-                            bgcolor: 'background.paper',
-                            borderRadius: 1,
-                            p: 2
+                            p: 2,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1
                         }}>
                             {messages.map((message) => (
                                 <ListItem 
                                     key={message.id}
                                     sx={{ 
-                                        mb: 1,
-                                        borderRadius: 1,
-                                        bgcolor: message.senderId === accounts[0]?.localAccountId 
-                                            ? 'primary.light' 
-                                            : 'grey.100'
+                                        alignSelf: message.senderId === accounts[0]?.localAccountId 
+                                            ? 'flex-end' 
+                                            : 'flex-start',
+                                        maxWidth: '70%',
+                                        p: 0
                                     }}
                                 >
-                                    <ListItemText
-                                        primary={message.content}
-                                        secondary={`${message.sender.firstName} ${message.sender.lastName} - ${new Date(message.createdAt).toLocaleString()}`}
-                                    />
+                                    <Box sx={{
+                                        display: 'flex',
+                                        flexDirection: message.senderId === accounts[0]?.localAccountId 
+                                            ? 'row-reverse' 
+                                            : 'row',
+                                        alignItems: 'flex-end',
+                                        gap: 1
+                                    }}>
+                                        <Avatar 
+                                            sx={{ 
+                                                bgcolor: message.senderId === accounts[0]?.localAccountId 
+                                                    ? 'primary.main' 
+                                                    : 'secondary.main',
+                                                width: 32,
+                                                height: 32,
+                                                fontSize: '0.875rem'
+                                            }}
+                                        >
+                                            {getInitials(message.sender.firstName, message.sender.lastName)}
+                                        </Avatar>
+                                        <Box>
+                                            <Paper
+                                                elevation={1}
+                                                sx={{
+                                                    p: 1.5,
+                                                    bgcolor: message.senderId === accounts[0]?.localAccountId 
+                                                        ? 'primary.main' 
+                                                        : 'grey.100',
+                                                    color: message.senderId === accounts[0]?.localAccountId 
+                                                        ? 'primary.contrastText' 
+                                                        : 'text.primary',
+                                                    borderRadius: 2,
+                                                    maxWidth: '100%',
+                                                    wordBreak: 'break-word'
+                                                }}
+                                            >
+                                                <Typography 
+                                                    variant="body1"
+                                                    sx={{
+                                                        whiteSpace: 'pre-wrap',
+                                                        overflowWrap: 'break-word'
+                                                    }}
+                                                >
+                                                    {message.content}
+                                                </Typography>
+                                            </Paper>
+                                            <Box sx={{ 
+                                                display: 'flex', 
+                                                gap: 1, 
+                                                mt: 0.5,
+                                                justifyContent: message.senderId === accounts[0]?.localAccountId 
+                                                    ? 'flex-end' 
+                                                    : 'flex-start'
+                                            }}>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {message.sender.firstName} {message.sender.lastName}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {formatMessageTime(message.createdAt)}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    </Box>
                                 </ListItem>
                             ))}
                             <div ref={messagesEndRef} />
                             {messages.length === 0 && (
-                                <Typography align="center" sx={{ mt: 2 }}>
-                                    No messages yet
-                                </Typography>
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    alignItems: 'center',
+                                    flexGrow: 1
+                                }}>
+                                    <Typography color="text.secondary">
+                                        No messages yet. Start the conversation!
+                                    </Typography>
+                                </Box>
                             )}
                         </List>
-                        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                            <TextField
-                                fullWidth
-                                variant="outlined"
-                                placeholder="Type a message..."
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                        sendMessage();
-                                    }
-                                }}
-                            />
-                            <Button 
-                                variant="contained" 
-                                onClick={sendMessage}
-                                disabled={!newMessage.trim()}
-                            >
-                                Send
-                            </Button>
+
+                        {/* Message Input */}
+                        <Box sx={{ 
+                            p: 2, 
+                            borderTop: 1, 
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper'
+                        }}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <TextField
+                                    fullWidth
+                                    variant="outlined"
+                                    placeholder="Type a message..."
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            sendMessage();
+                                        }
+                                    }}
+                                    multiline
+                                    maxRows={4}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 2
+                                        }
+                                    }}
+                                />
+                                <Tooltip title="Send message">
+                                    <IconButton 
+                                        onClick={sendMessage}
+                                        disabled={!newMessage.trim()}
+                                        sx={{ 
+                                            alignSelf: 'flex-end',
+                                            bgcolor: '#954d48',
+                                            color: '#ffffff',
+                                            '&:hover': {
+                                                bgcolor: '#7a3d38'
+                                            },
+                                            '&.Mui-disabled': {
+                                                bgcolor: 'action.disabledBackground',
+                                                color: 'action.disabled'
+                                            }
+                                        }}
+                                    >
+                                        <SendIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
                         </Box>
                     </>
                 )}
-            </Box>
+            </Paper>
         </Container>
     );
 }; 
