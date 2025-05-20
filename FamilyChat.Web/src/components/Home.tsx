@@ -1,14 +1,31 @@
 import { useMsal } from "@azure/msal-react";
 import { loginRequest, apiRequest } from "../config/authConfig";
-import { Button, Container, Typography, Box } from "@mui/material";
+import { Button, Container, Typography, Box, Stack, Menu, MenuItem } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import LoginIcon from '@mui/icons-material/Login';
+import MessageIcon from '@mui/icons-material/Message';
+import { ChatWindow } from "./ChatWindow";
+import ChatIcon from '@mui/icons-material/Chat';
+import MenuIcon from '@mui/icons-material/Menu';
+import React from "react";
+import { theme } from "../theme/theme";
+
 
 export const Home = () => {
     const { instance, accounts, inProgress } = useMsal();
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [showChatWindow, setShowChatWindow] = useState<boolean>(false);
     const navigate = useNavigate();
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
 
     const acquireToken = async () => {
         if (!accounts[0]) return;
@@ -46,42 +63,99 @@ export const Home = () => {
 
     return (
         <Container maxWidth="sm">
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
-                <Typography variant="h4" component="h1" gutterBottom>
-                    Welcome to Family Chat
-                </Typography>
-                
-                {!accounts[0] ? (
-                    <Button 
-                        variant="contained" 
-                        color="primary" 
+            {/* Menu for medium and larger screens */}
+            <Box sx={{
+                position: 'fixed',
+                left: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                zIndex: 1000,
+                // display: { xs: 'none', md: 'block' }
+            }}>
+                <StackMenu />
+            </Box>
+    
+            {showChatWindow && (
+                <ChatWindow 
+                    chatId="c4340764-f15f-48c9-9a4f-a28defe6db38"
+                    show={showChatWindow}
+                    setShow={setShowChatWindow}
+                />
+            )}
+
+            {!showChatWindow && (
+                <Box
+                    sx={{
+                    position: 'fixed',
+                    bottom: 32,
+                    right: 32,
+                    zIndex: 1200,
+                    bgcolor: '#954d48',
+                    borderRadius: '50%',
+                    width: 64,
+                    height: 64,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.18)',
+                    cursor: 'pointer',
+                    '&:hover': {
+                        bgcolor: '#7a3d38'
+                    }
+                    }}
+                    onClick={() => setShowChatWindow(true)}
+                >
+                    <ChatIcon sx={{ color: '#fff', fontSize: 36 }} />
+                </Box>
+            )}
+        </Container>
+    );
+
+    function StackMenu() {
+        return (
+            <Stack spacing={2}>
+                {!accounts[0] && (
+                    <Button
                         onClick={handleLogin}
-                        size="large"
                         disabled={inProgress !== "none"}
+                        variant="contained"
+                        startIcon={<LoginIcon />}
+                        sx={{
+                            bgcolor: '#954d48',
+                            '&:hover': {
+                                bgcolor: '#7a3d38'
+                            },
+                            borderRadius: '12px',
+                            padding: '12px 24px',
+                            minWidth: '180px',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            textTransform: 'none',
+                            fontSize: '1rem'
+                        }}
                     >
                         {inProgress === "login" ? "Signing in..." : "Sign In"}
                     </Button>
-                ) : (
-                    <Box sx={{ mt: 2 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Signed in as: {(accounts[0].idTokenClaims as any)?.given_name}
-                        </Typography>
-                        {error && (
-                            <Typography color="error" sx={{ mt: 2 }}>
-                                {error}
-                            </Typography>
-                        )}
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => navigate('/chat')}
-                            sx={{ mt: 2 }}
-                        >
-                            Go to Chat
-                        </Button>
-                    </Box>
                 )}
-            </Box>
-        </Container>
-    );
+                <Button
+                    variant="contained"
+                    startIcon={<MessageIcon />}
+                    onClick={() => setShowChatWindow(true)}
+                    sx={{
+                        bgcolor: '#954d48',
+                        '&:hover': {
+                            bgcolor: '#7a3d38'
+                        },
+                        borderRadius: '12px',
+                        padding: '12px 24px',
+                        minWidth: '180px',
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                        textTransform: 'none',
+                        fontSize: '1rem'
+                    }}
+                >
+                    Messages
+                </Button>
+            </Stack>
+        );
+    }
 };
